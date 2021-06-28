@@ -1,5 +1,5 @@
 <#
-    .SYNOPSIS 
+    .SYNOPSIS
     Windows 10 Software packaging wrapper
 
     .DESCRIPTION
@@ -11,9 +11,13 @@
     .AUTHOR
     Niklas Rast
 #>
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory = $true, HelpMessage = 'Provide your Teams Channel URL here')]
+    [string]$TeamsChannelUrl
+)
 
 $ErrorActionPreference = "SilentlyContinue"
-$TeamsChannelUrl = "" #Add your Teams Channel URL here
 
 function InformIT {
     param (
@@ -28,9 +32,9 @@ function InformIT {
         "title"      = "$ENV:COMPUTERNAME"
         "text"       = $message
     }
-     
+
     $TeamMessageBody = ConvertTo-Json $JSONBody -Depth 100
-    Invoke-RestMethod -Uri $TeamsChannelUrl -Method Post -Body $TeamMessageBody -ContentType 'application/json'    
+    Invoke-RestMethod -Uri $TeamsChannelUrl -Method Post -Body $TeamMessageBody -ContentType 'application/json'
 }
 
 $Models = @"
@@ -745,16 +749,16 @@ Qualcomm®,Snapdragon™,Snapdragon 8cx
 Qualcomm®,Snapdragon™,Snapdragon 8cx (Gen2)
 Qualcomm®,Snapdragon™,Microsoft SQ1
 Qualcomm®,Snapdragon™,Microsoft SQ2
-"@ | convertfrom-csv -Header Manafacturer, series, model 
- 
+"@ | convertfrom-csv -Header Manafacturer, series, model
+
 $Proc = (Get-CimInstance -ClassName Win32_Processor).name -split ' ' | ForEach-Object { $models | Where-Object -Property model -eq $_ }
- 
+
 $Results = [PSCustomObject]@{
     "TPM Compatible"       = [bool](Get-Tpm).tpmpresent
     "Processor Compatible" = [bool]$Proc
     "64 Bit OS"            = [Environment]::Is64BitOperatingSystem
-} 
- 
+}
+
 if ($results.psobject.properties.value -contains $false) {
     Write-Host "This device is not compatible with Windows 11" -ForegroundColor Red
     $Results | Format-List | Out-File C:\Windows\Logs\Windows11Readiness.log
